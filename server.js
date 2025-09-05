@@ -6,7 +6,8 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const users = {}; // { username: password }
-const posts = []; // { username, text }
+const posts = []; // { id, username, text, likes: Set, comments: [{username, text}] }
+let postId = 1;
 const followers = {}; // { username: Set of usernames they follow }
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -47,13 +48,36 @@ app.post('/post', (req, res) => {
   if (!username || !users[username]) return res.status(401).send('Not logged in');
   const text = req.body.text;
   if (!text) return res.status(400).send('No post text');
-  posts.push({ username, text });
-  res.redirect('/');
+  posts.push({ id: postId++, username, text, likes: new Set(), comments: [] });
+  res.status(200).end();
+});
+
+// Like a post
+app.post('/api/like/:id', (req, res) => {
+  const username = req.cookies.username;
+  const post = posts.find(p => p.id == req.params.id);
+  if (!username || !post) return res.status(400).json({ error: 'Invalid' });
+  post.likes.add(username);
+  res.json({ success: true, likes: post.likes.size });
+});
+
+// Comment on a post
+app.post('/api/comment/:id', (req, res) => {
+  const username = req.cookies.username;
+  const post = posts.find(p => p.id == req.params.id);
+  const text = req.body.text;
+  if (!username || !post || !text) return res.status(400).json({ error: 'Invalid' });
+  post.comments.push({ username, text });
+  res.json({ success: true, comments: post.comments });
 });
 
 // Get all posts (for index)
 app.get('/api/posts', (req, res) => {
-  res.json(posts.slice().reverse());
+  // Convert Set to Array for likes
+  res.json(posts.slice().reverse().map(p => ({
+    ...p,
+    likes: Array.from(p.likes)
+  })));
 });
 
 // Get user profile and posts
@@ -67,7 +91,10 @@ app.get('/profile/:username', (req, res) => {
 app.get('/api/profile/:username', (req, res) => {
   const { username } = req.params;
   if (!users[username]) return res.status(404).json({ error: 'User not found' });
-  const userPosts = posts.filter(p => p.username === username).reverse();
+  const userPosts = posts.filter(p => p.username === username).reverse().map(p => ({
+    ...p,
+    likes: Array.from(p.likes)
+  }));
   const followerList = Array.from(followers[username] || []);
   res.json({ username, posts: userPosts, followers: followerList });
 });

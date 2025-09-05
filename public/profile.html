@@ -26,9 +26,22 @@
       .then(data => {
         document.getElementById('profile-username').textContent = data.username;
         const postsUl = document.getElementById('profile-posts');
+        postsUl.innerHTML = '';
         data.posts.forEach(post => {
           const li = document.createElement('li');
-          li.textContent = post.text;
+          li.innerHTML = `
+            ${post.text}<br>
+            <button onclick="likeProfilePost(${post.id}, this)">Like (${post.likes.length})</button>
+            <div>
+              <form onsubmit="return commentProfilePost(${post.id}, this)">
+                <input type="text" name="comment" placeholder="Add comment" required>
+                <button type="submit">Comment</button>
+              </form>
+              <ul>
+                ${post.comments.map(c => `<li><b>${c.username}:</b> ${c.text}</li>`).join('')}
+              </ul>
+            </div>
+          `;
           postsUl.appendChild(li);
         });
         const followersUl = document.getElementById('followers');
@@ -47,6 +60,31 @@
           };
         }
       });
+
+    function likeProfilePost(id, btn) {
+      fetch(`/api/like/${id}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            btn.textContent = `Like (${data.likes})`;
+          }
+        });
+    }
+
+    function commentProfilePost(id, form) {
+      const input = form.comment;
+      fetch(`/api/comment/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `text=${encodeURIComponent(input.value)}`
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) location.reload();
+      });
+      input.value = '';
+      return false;
+    }
   </script>
 </body>
 </html>
