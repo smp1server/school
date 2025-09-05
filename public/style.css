@@ -1,0 +1,28 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f6f8fa;
+  margin: 2em;
+  text-align: center;
+}
+form {
+  margin: 1em auto;
+  display: inline-block;
+  text-align: left;
+}
+input, textarea, button {
+  margin: 0.5em 0;
+  font-size: 1em;
+}
+h1 {
+  color: #2d3a67;
+}
+div {
+  margin: 0.5em 0;
+  background: #fff;
+  padding: 0.5em;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px #0001;
+  width: 350px;
+  margin-left: auto;
+  margin-right: auto;
+}
