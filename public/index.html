@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>School Social - Posts</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // Helper to get cookie by name
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    // Logout: clear cookie and redirect
+    function logout() {
+      document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      window.location.href = '/login.html';
+    }
+
+    // Handle post submission (demo only)
+    function submitPost(event) {
+      event.preventDefault();
+      const postText = document.getElementById('postText').value;
+      if (postText.trim() === "") return;
+      const posts = document.getElementById('posts');
+      const li = document.createElement('li');
+      li.textContent = postText;
+      posts.prepend(li);
+      document.getElementById('postText').value = "";
+    }
+
+    // Fetch and display posts with usernames
+    function loadPosts() {
+      fetch('/api/posts')
+        .then(res => res.json())
+        .then(data => {
+          const posts = document.getElementById('posts');
+          posts.innerHTML = '';
+          data.forEach(post => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong><a href="/profile/${post.username}">${post.username}</a></strong><br>${post.text}`;
+            posts.appendChild(li);
+          });
+        });
+    }
+
+    // Check login on page load
+    window.onload = function() {
+      const username = getCookie('username');
+      if (!username) {
+        window.location.href = '/login.html';
+      } else {
+        document.getElementById('welcome').textContent = `Welcome, ${username}!`;
+        loadPosts();
+      }
+    };
+  </script>
+</head>
+<body>
+  <h2 id="welcome"></h2>
+  <button onclick="logout()">Logout</button>
+  <h3>Make a Post</h3>
+  <form id="postForm" onsubmit="submitPost(event)">
+    <textarea id="postText" rows="3" cols="40" placeholder="What's on your mind?" required></textarea><br>
+    <button type="submit">Post</button>
+  </form>
+  <h3>Posts</h3>
+  <ul id="posts"></ul>
+</body>
+</html>

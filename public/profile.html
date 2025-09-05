@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2 id="profile-username"></h2>
+  <button id="follow-btn" style="display:none;">Follow</button>
+  <h3>Posts</h3>
+  <ul id="profile-posts"></ul>
+  <h4>Followers</h4>
+  <ul id="followers"></ul>
+  <p><a href="/">Back to posts</a></p>
+  <script>
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+    const pathParts = window.location.pathname.split('/');
+    const profileUser = pathParts[pathParts.length - 1];
+    fetch(`/api/profile/${profileUser}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('profile-username').textContent = data.username;
+        const postsUl = document.getElementById('profile-posts');
+        data.posts.forEach(post => {
+          const li = document.createElement('li');
+          li.textContent = post.text;
+          postsUl.appendChild(li);
+        });
+        const followersUl = document.getElementById('followers');
+        data.followers.forEach(f => {
+          const li = document.createElement('li');
+          li.textContent = f;
+          followersUl.appendChild(li);
+        });
+        // Show follow button if not self
+        const currentUser = getCookie('username');
+        if (currentUser && currentUser !== data.username) {
+          document.getElementById('follow-btn').style.display = '';
+          document.getElementById('follow-btn').onclick = function() {
+            fetch(`/api/follow/${data.username}`, { method: 'POST' })
+              .then(() => alert('Followed!'));
+          };
+        }
+      });
+  </script>
+</body>
+</html>
